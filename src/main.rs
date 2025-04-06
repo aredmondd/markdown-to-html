@@ -13,19 +13,10 @@ fn main() -> io::Result<()> {
         }
     };
 
-    let path = format!("{}.md", file_name);
-    let temp_path = format!("{}-translation.md", file_name);
+    let input_path = format!("{}.md", file_name);
+    let output_path = format!("{}-translation.md", file_name);
 
-    let file = File::open(path)?;
-    let mut temp_file = File::create(temp_path)?;
-    let reader = BufReader::new(file);
-
-    for line_result in reader.lines() {
-        let line = transform_line(&line_result?);
-        temp_file.write_all(line.as_bytes())?;
-    }
-
-    Ok(())
+    process_file(&input_path, &output_path)
 }
 
 fn transform_line(line: &str) -> String {
@@ -38,4 +29,17 @@ fn transform_line(line: &str) -> String {
     }
 
     line
+}
+
+fn process_file(input_path: &str, output_path: &str) -> io::Result<()> {
+    let file = File::open(input_path)?;
+    let mut temp_file = File::create(output_path)?;
+    let reader = BufReader::new(file);
+
+    for line_result in reader.lines() {
+        let line = transform_line(&line_result?);
+        temp_file.write_all(line.as_bytes())?;
+    }
+
+    Ok(())
 }
