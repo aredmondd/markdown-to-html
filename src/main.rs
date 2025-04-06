@@ -35,13 +35,16 @@ fn process_file(input_path: &str, output_path: &str) -> io::Result<()> {
 fn transform_line(line: &str) -> String {
     let line = replace_hr(line);
     let line = replace_headings(&line);
-    let line = replace_italics(&line);
     let line = replace_strikethrough(&line);
-    // let line = replace_links(&line);
-    // let line = replace_inline_code(&line);
-    // let line = replace_code_block(&line);
+    let line = replace_italics(&line);
+    let line = replace_links(&line);
+    let mut line = replace_inline_code(&line);
 
-    // append a <br /> tag if necessary
+    if line.trim() == "<hr />" {
+        line.push_str("\n");
+    } else {
+        line.push_str("<br>\n");
+    }
 
     line
 }
@@ -50,22 +53,10 @@ fn replace_hr(line: &str) -> String {
     line.replace("---", "<hr />")
 }
 
-fn replace_strikethrough(line: &str) -> String {
-    let re = Regex::new(r"~{2}(.+?)~{2}").unwrap();
-
-    re.replace_all(line, "<s>$1</s>").to_string()
-}
-
-fn replace_italics(line: &str) -> String {
-    let re = Regex::new(r"_(.+?)_").unwrap();
-
-    re.replace_all(line, "<em>$1</em>").to_string()
-}
-
 fn replace_headings(line: &str) -> String {
     let re = Regex::new(r"^(#+)\s+(.+)$").unwrap();
 
-    re.replace_all(line, |caps: &regex::Captures| {
+    re.replace(line, |caps: &regex::Captures| {
         let num_hashes = caps.get(1).map_or(0, |m| m.as_str().len());
 
         let tag = match num_hashes {
@@ -83,7 +74,39 @@ fn replace_headings(line: &str) -> String {
     .to_string()
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-// }
+fn replace_strikethrough(line: &str) -> String {
+    let re = Regex::new(r"~{2}(.+?)~{2}").unwrap();
+
+    re.replace_all(line, "<s>$1</s>").to_string()
+}
+
+fn replace_italics(line: &str) -> String {
+    let re = Regex::new(r"_(.+?)_").unwrap();
+
+    re.replace_all(line, "<em>$1</em>").to_string()
+}
+
+fn replace_inline_code(line: &str) -> String {
+    let re = Regex::new(r"`(.+?)`").unwrap();
+
+    re.replace_all(
+        line,
+        "<span class=\"rounded-md bg-black/10 p-0.5 px-1 font-mono'>$1</span>",
+    )
+    .to_string()
+}
+
+fn replace_links(line: &str) -> String {
+    let re = Regex::new(r"\[(.*?)\]\((.*?)\)").unwrap();
+
+    re.replace_all(line, |caps: &regex::Captures| {
+        let link_text = caps.get(1).map_or("", |m| m.as_str());
+        let url = caps.get(2).map_or("", |m| m.as_str());
+
+        format!(
+            "<a href=\"{}\" class=\"hover:text-pink\">{} ↗</a>",
+            url, link_text
+        )
+    })
+    .to_string()
+}
