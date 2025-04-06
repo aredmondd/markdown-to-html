@@ -22,10 +22,12 @@ fn main() -> io::Result<()> {
         }
     };
 
-    let input_path = format!("{}.md", file_name);
-    let output_path = format!("{}-translation.md", file_name);
+    let input_path = file_name.clone();
+    let input_dir = std::path::Path::new(&input_path).parent().unwrap_or_else(|| std::path::Path::new("."));
+    let file_name_only = std::path::Path::new(&input_path).file_name().unwrap().to_str().unwrap();
+    let output_path = input_dir.join(format!("{}-translation.md", file_name_only));
 
-    process_file(&input_path, &output_path)
+    process_file(&input_path, output_path.to_str().unwrap())
 }
 
 fn process_file(input_path: &str, output_path: &str) -> io::Result<()> {
