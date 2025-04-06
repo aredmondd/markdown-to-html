@@ -1,7 +1,16 @@
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{self, BufRead, BufReader};
+
+lazy_static! {
+    static ref RE_HEADINGS: Regex = Regex::new(r"^(#+)\s+(.+)$").unwrap();
+    static ref RE_STRIKETHROUGH: Regex = Regex::new(r"~{2}(.+?)~{2}").unwrap();
+    static ref RE_ITALICS: Regex = Regex::new(r"_(.+?)_").unwrap();
+    static ref RE_INLINE_CODE: Regex = Regex::new(r"`(.+?)`").unwrap();
+    static ref RE_LINKS: Regex = Regex::new(r"\[(.*?)\]\((.*?)\)").unwrap();
+}
 
 fn main() -> io::Result<()> {
     // get the file name passed in from the CLI
@@ -54,59 +63,52 @@ fn replace_hr(line: &str) -> String {
 }
 
 fn replace_headings(line: &str) -> String {
-    let re = Regex::new(r"^(#+)\s+(.+)$").unwrap();
+    RE_HEADINGS
+        .replace(line, |caps: &regex::Captures| {
+            let num_hashes = caps.get(1).map_or(0, |m| m.as_str().len());
 
-    re.replace(line, |caps: &regex::Captures| {
-        let num_hashes = caps.get(1).map_or(0, |m| m.as_str().len());
+            let tag = match num_hashes {
+                1 => "h1",
+                2 => "h2",
+                3 => "h3",
+                4 => "h4",
+                _ => "h3",
+            };
 
-        let tag = match num_hashes {
-            1 => "h1",
-            2 => "h2",
-            3 => "h3",
-            4 => "h4",
-            _ => "h3",
-        };
+            let heading_text = caps.get(2).map_or("", |m| m.as_str());
 
-        let heading_text = caps.get(2).map_or("", |m| m.as_str());
-
-        format!("<{}>{}</{}>", tag, heading_text, tag)
-    })
-    .to_string()
+            format!("<{}>{}</{}>", tag, heading_text, tag)
+        })
+        .to_string()
 }
 
 fn replace_strikethrough(line: &str) -> String {
-    let re = Regex::new(r"~{2}(.+?)~{2}").unwrap();
-
-    re.replace_all(line, "<s>$1</s>").to_string()
+    RE_STRIKETHROUGH.replace_all(line, "<s>$1</s>").to_string()
 }
 
 fn replace_italics(line: &str) -> String {
-    let re = Regex::new(r"_(.+?)_").unwrap();
-
-    re.replace_all(line, "<em>$1</em>").to_string()
+    RE_ITALICS.replace_all(line, "<em>$1</em>").to_string()
 }
 
 fn replace_inline_code(line: &str) -> String {
-    let re = Regex::new(r"`(.+?)`").unwrap();
-
-    re.replace_all(
-        line,
-        "<span class=\"rounded-md bg-black/10 p-0.5 px-1 font-mono'>$1</span>",
-    )
-    .to_string()
+    RE_INLINE_CODE
+        .replace_all(
+            line,
+            "<span class=\"rounded-md bg-black/10 p-0.5 px-1 font-mono'>$1</span>",
+        )
+        .to_string()
 }
 
 fn replace_links(line: &str) -> String {
-    let re = Regex::new(r"\[(.*?)\]\((.*?)\)").unwrap();
+    RE_LINKS
+        .replace_all(line, |caps: &regex::Captures| {
+            let link_text = caps.get(1).map_or("", |m| m.as_str());
+            let url = caps.get(2).map_or("", |m| m.as_str());
 
-    re.replace_all(line, |caps: &regex::Captures| {
-        let link_text = caps.get(1).map_or("", |m| m.as_str());
-        let url = caps.get(2).map_or("", |m| m.as_str());
-
-        format!(
-            "<a href=\"{}\" class=\"hover:text-pink\">{} ↗</a>",
-            url, link_text
-        )
-    })
-    .to_string()
+            format!(
+                "<a href=\"{}\" class=\"hover:text-pink\">{} ↗</a>",
+                url, link_text
+            )
+        })
+        .to_string()
 }
