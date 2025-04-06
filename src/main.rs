@@ -18,19 +18,24 @@ fn main() -> io::Result<()> {
 
     let file = File::open(path)?;
     let mut temp_file = File::create(temp_path)?;
-
     let reader = BufReader::new(file);
 
     for line_result in reader.lines() {
-        let mut line = line_result?;
-        line = line.replace("---", HR_TAG);
-
-        if line.trim() == HR_TAG {
-            temp_file.write_all(format!("{}\n", line).as_bytes())?;
-        } else {
-            temp_file.write_all(format!("{}<br />\n", line).as_bytes())?;
-        }
+        let line = transform_line(&line_result?);
+        temp_file.write_all(line.as_bytes())?;
     }
 
     Ok(())
+}
+
+fn transform_line(line: &str) -> String {
+    let mut line = line.replace("---", HR_TAG);
+
+    if line.trim() == HR_TAG {
+        line.push('\n');
+    } else {
+        line.push_str("<br />\n");
+    }
+
+    line
 }
