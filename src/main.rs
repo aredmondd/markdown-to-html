@@ -25,8 +25,11 @@ fn main() -> io::Result<()> {
         let mut line = line_result?;
         line = line.replace("---", HR_TAG);
 
-        // add to the new file with linebreaks
-        temp_file.write_all(format!("{}<br />", line).as_bytes())?;
+        if line.trim() == HR_TAG {
+            temp_file.write_all(format!("{}\n", line).as_bytes())?;
+        } else {
+            temp_file.write_all(format!("{}<br />\n", line).as_bytes())?;
+        }
     }
 
     Ok(())
