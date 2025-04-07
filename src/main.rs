@@ -23,8 +23,14 @@ fn main() -> io::Result<()> {
     };
 
     let input_path = file_name.clone();
-    let input_dir = std::path::Path::new(&input_path).parent().unwrap_or_else(|| std::path::Path::new("."));
-    let file_name_only = std::path::Path::new(&input_path).file_name().unwrap().to_str().unwrap();
+    let input_dir = std::path::Path::new(&input_path)
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."));
+    let file_name_only = std::path::Path::new(&input_path)
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap();
     let output_path = input_dir.join(format!("{}-translation.md", file_name_only));
 
     process_file(&input_path, output_path.to_str().unwrap())
@@ -79,7 +85,10 @@ fn replace_headings(line: &str) -> String {
 
             let heading_text = caps.get(2).map_or("", |m| m.as_str());
 
-            format!("<{}>{}</{}>", tag, heading_text, tag)
+            format!(
+                "<{} class=\"text-3xl font-bold\">{}</{}>",
+                tag, heading_text, tag
+            )
         })
         .to_string()
 }
@@ -108,7 +117,7 @@ fn replace_links(line: &str) -> String {
             let url = caps.get(2).map_or("", |m| m.as_str());
 
             format!(
-                "<a href=\"{}\" class=\"hover:text-pink\">{} ↗</a>",
+                "<a href=\"{}\" class=\"underline underline-offset-2 hover:underline-offset-4 hover:cursor-pointer transition-all duration-200 ease-in-out\">{} ↗</a>",
                 url, link_text
             )
         })
