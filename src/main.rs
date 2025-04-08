@@ -86,7 +86,7 @@ fn replace_headings(line: &str) -> String {
             let heading_text = caps.get(2).map_or("", |m| m.as_str());
 
             format!(
-                "<{} class=\"text-3xl font-bold\">{}</{}>",
+                "<{} class=\"text-2xl font-bold\">{}</{}>",
                 tag, heading_text, tag
             )
         })
@@ -117,7 +117,7 @@ fn replace_links(line: &str) -> String {
             let url = caps.get(2).map_or("", |m| m.as_str());
 
             format!(
-                "<a href=\"{}\" class=\"underline underline-offset-2 hover:underline-offset-4 hover:cursor-pointer transition-all duration-200 ease-in-out\">{} ↗</a>",
+                "<a href=\"{}\" target=\"_blank\"class=\"underline underline-offset-2 font-semibold\">{} ↗</a>",
                 url, link_text
             )
         })
